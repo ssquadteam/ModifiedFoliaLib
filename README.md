@@ -1,4 +1,4 @@
-# ModiefiedFoliaLib &nbsp; &nbsp;
+# ModifiedFoliaLib &nbsp; &nbsp;
 
 Developers and contributors like you make this project possible. This project is not directly affiliated with PaperMC. 
 
