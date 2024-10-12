@@ -1,78 +1,89 @@
 package com.tcoded.folialib;
 
 import com.tcoded.folialib.enums.ImplementationType;
-import com.tcoded.folialib.impl.PlatformScheduler;
-import com.tcoded.folialib.util.InvalidTickDelayNotifier;
+import com.tcoded.folialib.impl.*;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.logging.Logger;
 
 public class FoliaLib {
 
     private final JavaPlugin plugin;
 
     private final ImplementationType implementationType;
-    private final PlatformScheduler scheduler;
+    private final ServerImplementation implementation;
 
     public FoliaLib(JavaPlugin plugin) {
         this.plugin = plugin;
 
         // Find the implementation type based on the class names
         ImplementationType foundType = ImplementationType.UNKNOWN;
-
+        typeLoop:
         for (ImplementationType type : ImplementationType.values()) {
-            // Implementation is not suited for this server
-            if (!type.selfCheck()) continue;
-            // Found implementation match
-            foundType = type;
-            break;
+            String[] classNames = type.getClassNames();
+
+            // Check if any of the class names are present
+            for (String className : classNames) {
+                try {
+                    // Try to load the class
+                    Class.forName(className);
+
+                    // Found the server type, remember that and break the loop
+                    foundType = type;
+                    break typeLoop;
+                } catch (ClassNotFoundException ignored) {}
+            }
         }
 
         // Apply the implementation based on the type
         this.implementationType = foundType;
-        this.scheduler = this.createServerImpl(this.implementationType.getImplementationClassName());
+        switch (foundType) {
+            case FOLIA:
+                this.implementation = this.createServerImpl("FoliaImplementation");
+                break;
+            case PAPER:
+                this.implementation = this.createServerImpl("PaperImplementation");
+                break;
+            case SPIGOT:
+                this.implementation = this.createServerImpl("SpigotImplementation");
+                break;
+            default:
+                this.implementation = this.createServerImpl("UnsupportedImplementation");
+                break;
+        }
 
         // Check for valid implementation
-        if (this.scheduler == null) {
+        if (this.implementation == null) {
             throw new IllegalStateException(
                     "Failed to create server implementation. Please report this to the FoliaLib GitHub issues page. " +
                             "Forks of server software may not all be supported. If you are using an unofficial fork, " +
                             "please report this to the fork's developers first.");
         }
-
-        // Check for valid relocation
-        // Runtime replace commas to avoid compiler relocations changing this string too
-        // Not beautiful, but functional
-        String originalLocation = "com,tcoded,folialib,".replace(",", ".");
-        if (this.getClass().getName().startsWith(originalLocation)) {
-            Logger logger = this.plugin.getLogger();
-            logger.severe("****************************************************************");
-            logger.severe("FoliaLib is not be relocated correctly! This will cause conflicts");
-            logger.severe("with other plugins using FoliaLib. Please contact the developers");
-            logger.severe(String.format("of '%s' and inform them of this issue immediately!", this.plugin.getDescription().getName()));
-            logger.severe("****************************************************************");
-        }
     }
 
-    // Getters
+    private ServerImplementation createServerImpl(String implName) {
+        String basePackage = "com.tcoded.folialib.impl.";
+
+        try {
+            return (ServerImplementation) Class.forName(basePackage + implName)
+                    .getConstructor(this.getClass())
+                    .newInstance(this);
+        } catch (InstantiationException | ClassNotFoundException | NoSuchMethodException | InvocationTargetException |
+                 IllegalAccessException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
 
     @SuppressWarnings("unused")
     public ImplementationType getImplType() {
         return implementationType;
     }
 
-    /**
-     * @deprecated Use {@link #getImplType()} instead. (forRemoval = true, since = "0.3.5")
-     */
-    @Deprecated
     @SuppressWarnings("unused")
-    public PlatformScheduler getImpl() {
-        return getScheduler();
-    }
-
-    public PlatformScheduler getScheduler() {
-        return scheduler;
+    public ServerImplementation getImpl() {
+        return implementation;
     }
 
     @SuppressWarnings("unused")
@@ -82,12 +93,12 @@ public class FoliaLib {
 
     @SuppressWarnings("unused")
     public boolean isPaper() {
-        return implementationType == ImplementationType.PAPER || implementationType == ImplementationType.LEGACY_PAPER;
+        return implementationType == ImplementationType.PAPER;
     }
 
     @SuppressWarnings("unused")
     public boolean isSpigot() {
-        return implementationType == ImplementationType.SPIGOT || implementationType == ImplementationType.LEGACY_SPIGOT;
+        return implementationType == ImplementationType.SPIGOT;
     }
 
     @SuppressWarnings("unused")
@@ -97,34 +108,5 @@ public class FoliaLib {
 
     public JavaPlugin getPlugin() {
         return plugin;
-    }
-
-    // Public Options
-
-    @SuppressWarnings("unused")
-    public void disableInvalidTickValueWarning() {
-        InvalidTickDelayNotifier.disableNotifications = true;
-    }
-
-    @SuppressWarnings("unused")
-    public void enableInvalidTickValueDebug() {
-        InvalidTickDelayNotifier.debugMode = true;
-    }
-
-    // Internal Utils
-
-    private PlatformScheduler createServerImpl(String implName) {
-        String basePackage = this.getClass().getPackage().getName() + ".impl.";
-
-        try {
-            return (PlatformScheduler) Class.forName(basePackage + implName)
-                    .getConstructor(this.getClass())
-                    .newInstance(this);
-        } catch (InstantiationException | ClassNotFoundException | NoSuchMethodException | InvocationTargetException |
-                 IllegalAccessException e) {
-            e.printStackTrace();
-        }
-
-        return null;
     }
 }
