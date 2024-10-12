@@ -45,7 +45,7 @@ repositories {
 }
 
 dependencies {
-    implementation "com.github.technicallycoded:FoliaLib:main-SNAPSHOT"
+    implementation "com.github.ssquadteam:ModifiedFoliaLib:main-SNAPSHOT"
 }
 
 shadowJar {
@@ -55,7 +55,7 @@ shadowJar {
     // Optional: If you use minimize, make sure you exclude FoliaLib
     // Do not uncomment this if you don't know what you are doing
     // minimize {
-    //     exclude dependency("com.github.technicallycoded:FoliaLib:.*")
+    //     exclude dependency("com.github.ssquadteam:ModifiedFoliaLib:.*")
     // }
 }
 ```
@@ -75,8 +75,8 @@ shadowJar {
 
 <dependencies>
     <dependency>
-        <groupId>com.github.technicallycoded</groupId>
-        <artifactId>FoliaLib</artifactId>
+        <groupId>com.github.ssquadteam</groupId>
+        <artifactId>ModifiedFoliaLib</artifactId>
         <version>main-SNAPSHOT</version>
         <scope>compile</scope>
     </dependency>
