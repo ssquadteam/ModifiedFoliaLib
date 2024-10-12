@@ -1,4 +1,4 @@
-# FoliaLib &nbsp; &nbsp; [![GitHub Release](https://img.shields.io/github/release/technicallycoded/FoliaLib.svg?style=flat)]()
+# ModiefiedFoliaLib &nbsp; &nbsp;
 
 Developers and contributors like you make this project possible. This project is not directly affiliated with PaperMC. 
 
